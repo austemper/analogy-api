@@ -1,0 +1,22 @@
+(:Concept {
+  name: string,
+  description: string
+})
+
+(:Mode {
+  type: "flow" | "control" | "optimization",
+
+  state: string,
+  transformation: string,
+  constraint: string,
+  dynamics: string,
+  feedback: string,
+  failure: string
+})
+
+(:Structure {
+  name: string
+})
+
+(:Concept)-[:HAS_MODE]->(:Mode)
+(:Mode)-[:INSTANCE_OF]->(:Structure)

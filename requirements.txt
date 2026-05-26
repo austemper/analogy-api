@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+neo4j
+google-genai
+graphistry
+gspread
+oauth2client
+sentence-transformers
+spacy
+umap-learn
+hdbscan
+pandas
+numpy
+networkx
+scikit-learn

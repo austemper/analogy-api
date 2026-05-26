@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: analogy-api
+    runtime: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python -m spacy download ja_core_news_lg
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GRAPHISTRY_USERNAME
+        sync: false
+      - key: GRAPHISTRY_PASSWORD
+        sync: false
+      - key: GOOGLE_CREDENTIALS_JSON
+        sync: false
