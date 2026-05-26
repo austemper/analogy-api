@@ -8,7 +8,6 @@ import ast
 import sys
 import json
 import umap
-import spacy
 import hdbscan
 import numpy as np
 import networkx as nx
@@ -31,16 +30,25 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 client = genai.Client(api_key=GEMINI_API_KEY)
 MODEL_NAME = "gemini-2.5-flash"
 
-nlp = spacy.load("ja_core_news_lg")
+_embedder = None
+_driver = None
 
-embedder = SentenceTransformer(
-    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-)
+def get_embedder():
+    global _embedder
+    if _embedder is None:
+        _embedder = SentenceTransformer(
+            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        )
+    return _embedder
 
-driver = GraphDatabase.driver(
-    NEO4J_URI,
-    auth=(NEO4J_USER, NEO4J_PASSWORD)
-)
+def get_driver():
+    global _driver
+    if _driver is None:
+        _driver = GraphDatabase.driver(
+            NEO4J_URI,
+            auth=(NEO4J_USER, NEO4J_PASSWORD)
+        )
+    return _driver
 
 EDGE_LABELS = {
     "HAS_MODE": "モードを持つ",
@@ -380,7 +388,7 @@ def build_structure_hierarchy(structure_key, structure_name_ja):
     s1_raw = generate_upper_structure(s2_key, level=1)
     s1_key, s1_name, s1_emb = resolve_structure(s1_raw, level=1)
 
-    with driver.session() as session:
+    with get_driver().session() as session:
 
         # --- Level1 ---
         session.run("""
@@ -443,7 +451,7 @@ def get_embedding(text):
     if text in embedding_cache:
         return embedding_cache[text]
 
-    vec = embedder.encode(text)
+    vec = get_embedder().encode(text)
 
     embedding_cache[text] = vec
 
@@ -498,7 +506,7 @@ def similarity_kernel(v1, v2):
 
 def fetch_structures(level=None):
 
-    with driver.session() as session:
+    with get_driver().session() as session:
 
         if level:
             result = session.run("""
@@ -671,7 +679,7 @@ def resolve_structure(structure_input, level):
 
 def write_graph_minimal(concept_name, description, modes_json):
 
-    with driver.session() as session:
+    with get_driver().session() as session:
 
         # --- Concept ---
         desc_data = generate_description(concept_name)
