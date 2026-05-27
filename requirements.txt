@@ -7,9 +7,5 @@ gspread
 oauth2client
 sentence-transformers
 spacy
-umap-learn
-hdbscan
 pandas
 numpy
-networkx
-scikit-learn

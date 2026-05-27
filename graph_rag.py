@@ -5,17 +5,9 @@
 import os
 import re
 import ast
-import sys
 import json
-import umap
-import hdbscan
 import numpy as np
-import networkx as nx
 from google import genai
-from neo4j import GraphDatabase
-from sklearn.neighbors import KernelDensity
-from sklearn.neighbors import NearestNeighbors
-from sentence_transformers import SentenceTransformer
 
 # =========================
 # 定義
@@ -36,6 +28,7 @@ _driver = None
 def get_embedder():
     global _embedder
     if _embedder is None:
+        from sentence_transformers import SentenceTransformer
         _embedder = SentenceTransformer(
             "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
         )
@@ -44,6 +37,7 @@ def get_embedder():
 def get_driver():
     global _driver
     if _driver is None:
+        from neo4j import GraphDatabase
         _driver = GraphDatabase.driver(
             NEO4J_URI,
             auth=(NEO4J_USER, NEO4J_PASSWORD)
