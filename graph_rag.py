@@ -80,8 +80,10 @@ upper_cache = {}
 # ログ関数
 # =========================
 
+import time
+
 def log_step(step):
-    print(f"\r[RUNNING] {step}", end="", flush=True)
+    print(f"[STEP] {step}", flush=True)
 
 # =========================
 # LLM Call Counter
@@ -96,10 +98,14 @@ def estimate_tokens(text):
 def call_llm(prompt, tag="unknown"):
     global LLM_STATS
 
+    t0 = time.time()
+    print(f"[LLM] {tag} → calling...", flush=True)
     response = client.models.generate_content(
         model=MODEL_NAME,
         contents=prompt
     )
+    elapsed = time.time() - t0
+    print(f"[LLM] {tag} → done ({elapsed:.1f}s)", flush=True)
 
     response_text = response.text if response.text else ""
 
@@ -700,6 +706,7 @@ def write_graph_minimal(concept_name, description, modes_json):
 
             type_key = mode["type"]
             type_ja = MODE_TYPE_MAP.get(type_key, type_key)
+            print(f"[GRAPH] mode={type_key} structure={mode.get('structure')!r}", flush=True)
 
             # --- Mode ---
             result = session.run("""
@@ -790,28 +797,35 @@ def summarize_llm_stats(stats):
 def run_pipeline(concept):
 
     global LLM_STATS
-    LLM_STATS = {} 
+    LLM_STATS = {}
 
-    log_step("Generating modes")
+    t_start = time.time()
+    print(f"[PIPELINE] START concept={concept!r}", flush=True)
+
+    log_step("generate_modes")
     modes_json = generate_modes(concept)
 
     if not modes_json:
-        print("Mode生成失敗")
-        return
+        print("[PIPELINE] ERROR: generate_modes returned None", flush=True)
+        raise RuntimeError("generate_modes failed")
 
-    log_step("Generating description")
+    print(f"[PIPELINE] modes count={len(modes_json.get('modes', []))}", flush=True)
+
+    log_step("generate_description")
     description = generate_description(concept)
+    print(f"[PIPELINE] description domain={description.get('domain')}", flush=True)
 
-    log_step("Writing graph")
+    log_step("write_graph_minimal")
     write_graph_minimal(concept, description, modes_json)
 
-    print("\rPipeline実行完了！")
+    elapsed = time.time() - t_start
+    print(f"[PIPELINE] DONE ({elapsed:.1f}s)", flush=True)
 
     return {
-    "concept": concept,
-    "modes": modes_json,
-    "llm_stats": LLM_STATS
-}
+        "concept": concept,
+        "modes": modes_json,
+        "llm_stats": LLM_STATS
+    }
 
 #if __name__ == "__main__":
 

@@ -47,17 +47,21 @@ def write_to_sheet(concept, status, total, url, job_id):
 
 def worker(job_id, concept):
 
-    print(f"[{job_id}] START")
+    print(f"[WORKER][{job_id}] START concept={concept!r}", flush=True)
+
+    url = None
+    total = 0
 
     try:
 
-        print(f"[{job_id}] run_pipeline START")
+        print(f"[WORKER][{job_id}] run_pipeline START", flush=True)
         output = run_pipeline(concept)
-        print(f"[{job_id}] run_pipeline END")
+        print(f"[WORKER][{job_id}] run_pipeline END", flush=True)
         stats = output["llm_stats"]
-        print(f"[{job_id}] update_graphistry START")
+
+        print(f"[WORKER][{job_id}] update_graphistry START", flush=True)
         url = update_graphistry()
-        print(f"[{job_id}] update_graphistry END")
+        print(f"[WORKER][{job_id}] update_graphistry END url={url}", flush=True)
 
         # ===== job保存 =====
         JOBS[job_id] = {
@@ -65,22 +69,23 @@ def worker(job_id, concept):
             "result": output["modes"],
             "stats": output["llm_stats"],
             "graph_url": url
-            }
-        print(f"[{job_id}] DONE")
-        
-        
+        }
+        print(f"[WORKER][{job_id}] DONE", flush=True)
+
     except Exception as e:
 
-        logging.exception(f"Graphistryの更新に失敗しました…: {e}")
+        logging.exception(f"[WORKER][{job_id}] FAILED: {e}")
 
         JOBS[job_id] = {
             "status": "error",
             "error": str(e)
         }
 
-        # エラーも記録
-        write_to_sheet(concept, "error", total, url, job_id)
-        
+        try:
+            write_to_sheet(concept, "error", total, url, job_id)
+        except Exception as sheet_e:
+            print(f"[WORKER][{job_id}] write_to_sheet failed: {sheet_e}", flush=True)
+
         return
     
     
