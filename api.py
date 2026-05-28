@@ -47,9 +47,8 @@ def get_result(job_id: str):
 
     if job is None:
         return {
-            "status": "not_found",
             "job_id": job_id,
-            "all_jobs_keys": list(JOBS.keys())  # デバッグ用
+            "data": {"status": "error", "error": "job not found (server may have restarted)"},
         }
 
     return {
