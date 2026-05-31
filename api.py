@@ -5,6 +5,7 @@ import logging
 import threading
 import uuid
 from worker import worker
+from state import JOBS
 
 app = FastAPI()
 
@@ -17,8 +18,6 @@ app.add_middleware(
 
 logging.basicConfig(level=logging.INFO)
 
-# ===== メモリ保存（簡易ジョブ管理）=====
-JOBS = {}
 
 @app.post("/run_graph")
 async def run_graph(request: Request):
@@ -28,6 +27,7 @@ async def run_graph(request: Request):
     concept = payload["concept"]
     job_id = str(uuid.uuid4())
     JOBS[job_id] = {"status": "running"}
+    print(f"[API] POST /run_graph concept={concept!r} job_id={job_id}", flush=True)
     threading.Thread(target=worker, args=(job_id, concept)).start()
     return {"status": "started", "job_id": job_id}
 
@@ -37,6 +37,7 @@ async def run_graph(request: Request):
 def run_graph_get(concept: str):
     job_id = str(uuid.uuid4())
     JOBS[job_id] = {"status": "running"}
+    print(f"[API] GET /run_graph concept={concept!r} job_id={job_id}", flush=True)
     threading.Thread(target=worker, args=(job_id, concept)).start()
     return {"status": "started", "job_id": job_id}
 
@@ -44,6 +45,7 @@ def run_graph_get(concept: str):
 @app.get("/result/{job_id}")
 def get_result(job_id: str):
     job = JOBS.get(job_id)
+    print(f"[API] GET /result/{job_id} → {job.get('status') if job else 'not_found'}", flush=True)
 
     if job is None:
         return {

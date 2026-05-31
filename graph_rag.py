@@ -827,16 +827,14 @@ def run_pipeline(concept):
         "llm_stats": LLM_STATS
     }
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
 
-    concept = "ユークリッド距離"  
+    concept = "ユークリッド距離"
 
     result = run_pipeline(concept)
 
-    # --- 集計 ---
     summary = summarize_llm_stats(result["llm_stats"])
 
-    # --- 出力 ---
     print("\n=== RESULT ===")
     print(json.dumps(result["modes"], ensure_ascii=False, indent=2))
 
