@@ -4,6 +4,7 @@ import json
 import logging
 import threading
 import uuid
+import datetime
 from worker import worker
 from state import JOBS
 
@@ -18,6 +19,18 @@ app.add_middleware(
 
 logging.basicConfig(level=logging.INFO)
 
+SERVER_START = datetime.datetime.now().isoformat()
+print(f"[API] server started at {SERVER_START}", flush=True)
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "server_started_at": SERVER_START,
+        "job_count": len(JOBS)
+    }
+
 
 @app.post("/run_graph")
 async def run_graph(request: Request):
@@ -26,7 +39,7 @@ async def run_graph(request: Request):
     payload = json.loads(body)
     concept = payload["concept"]
     job_id = str(uuid.uuid4())
-    JOBS[job_id] = {"status": "running"}
+    JOBS[job_id] = {"status": "running", "concept": concept, "started_at": datetime.datetime.now().isoformat()}
     print(f"[API] POST /run_graph concept={concept!r} job_id={job_id}", flush=True)
     threading.Thread(target=worker, args=(job_id, concept)).start()
     return {"status": "started", "job_id": job_id}
@@ -36,7 +49,7 @@ async def run_graph(request: Request):
 @app.get("/run_graph")
 def run_graph_get(concept: str):
     job_id = str(uuid.uuid4())
-    JOBS[job_id] = {"status": "running"}
+    JOBS[job_id] = {"status": "running", "concept": concept, "started_at": datetime.datetime.now().isoformat()}
     print(f"[API] GET /run_graph concept={concept!r} job_id={job_id}", flush=True)
     threading.Thread(target=worker, args=(job_id, concept)).start()
     return {"status": "started", "job_id": job_id}

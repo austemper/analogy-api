@@ -2,12 +2,12 @@ import os
 import base64
 import tempfile
 import logging
+import datetime
 from graph_rag import run_pipeline
 from graphistry_sync import update_graphistry
 from state import JOBS
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import datetime
 
 
 def get_credentials_path():
@@ -66,11 +66,13 @@ def worker(job_id, concept):
         # ===== job保存 =====
         JOBS[job_id] = {
             "status": "done",
+            "concept": concept,
             "result": output["modes"],
             "stats": output["llm_stats"],
-            "graph_url": url
+            "graph_url": url,
+            "completed_at": datetime.datetime.now().isoformat()
         }
-        print(f"[WORKER][{job_id}] DONE", flush=True)
+        print(f"[WORKER][{job_id}] DONE concept={concept!r}", flush=True)
 
     except Exception as e:
 
