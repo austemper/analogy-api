@@ -5,6 +5,8 @@ import logging
 import threading
 import uuid
 import datetime
+import urllib.request as _urllib
+import os
 from worker import worker
 from state import JOBS
 
@@ -21,6 +23,22 @@ logging.basicConfig(level=logging.INFO)
 
 SERVER_START = datetime.datetime.now().isoformat()
 print(f"[API] server started at {SERVER_START}", flush=True)
+
+
+@app.get("/list_models")
+def list_models():
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}&pageSize=100"
+    req = _urllib.Request(url)
+    with _urllib.urlopen(req) as resp:
+        data = json.loads(resp.read())
+    embed_models = [
+        {"name": m["name"], "methods": m.get("supportedGenerationMethods", [])}
+        for m in data.get("models", [])
+        if "embedContent" in m.get("supportedGenerationMethods", [])
+        or "batchEmbedContents" in m.get("supportedGenerationMethods", [])
+    ]
+    return {"embedding_models": embed_models}
 
 
 @app.get("/health")
