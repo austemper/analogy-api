@@ -30,7 +30,7 @@ def get_embedder():
     if _embedder is None:
         from sentence_transformers import SentenceTransformer
         _embedder = SentenceTransformer(
-            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+            "sentence-transformers/all-MiniLM-L6-v2"
         )
     return _embedder
 
