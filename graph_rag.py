@@ -22,17 +22,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 client = genai.Client(api_key=GEMINI_API_KEY)
 MODEL_NAME = "gemini-2.5-flash"
 
-_embedder = None
 _driver = None
-
-def get_embedder():
-    global _embedder
-    if _embedder is None:
-        from sentence_transformers import SentenceTransformer
-        _embedder = SentenceTransformer(
-            "sentence-transformers/all-MiniLM-L6-v2"
-        )
-    return _embedder
 
 def get_driver():
     global _driver
@@ -447,36 +437,34 @@ def build_structure_hierarchy(structure_key, structure_name_ja):
 embedding_cache = {}
 
 def get_embedding(text):
-
     if text in embedding_cache:
         return embedding_cache[text]
-
-    vec = get_embedder().encode(text)
-
+    print(f"[EMB] {text!r}", flush=True)
+    result = client.models.embed_content(
+        model="models/text-embedding-004",
+        contents=text
+    )
+    vec = np.array(result.embeddings[0].values)
     embedding_cache[text] = vec
-
     return vec
 
 def safe_embedding(e):
     if e is None:
-        return np.zeros(384)  # embedding の次元に合わせてゼロベクトル
+        return np.zeros(768)
     elif isinstance(e, str):
         e = e.strip()
         if not e:
-            return np.zeros(384)
+            return np.zeros(768)
         try:
-            # 文字列がリスト形式の場合は literal_eval
             return np.array(ast.literal_eval(e), dtype=float)
         except (ValueError, SyntaxError):
-            # 空文字や不正文字列の場合はゼロベクトル
-            return np.zeros(384)
+            return np.zeros(768)
     elif isinstance(e, list):
         return np.array(e, dtype=float)
     elif hasattr(e, "tolist"):  # ndarray
         return np.array(e, dtype=float)
     else:
-        # 不明な型の場合もゼロベクトルで保護
-        return np.zeros(384)
+        return np.zeros(768)
 
 def get_structure_embedding(text):
     return get_embedding(text)
@@ -492,6 +480,9 @@ def similarity_kernel(v1, v2):
 
     v1 = safe_embedding(v1)
     v2 = safe_embedding(v2)
+
+    if v1.shape != v2.shape:
+        return 0.0
 
     denom = np.linalg.norm(v1) * np.linalg.norm(v2)
 
