@@ -6,6 +6,7 @@ import os
 import re
 import ast
 import json
+import urllib.request as _urllib
 import numpy as np
 from google import genai
 
@@ -440,11 +441,16 @@ def get_embedding(text):
     if text in embedding_cache:
         return embedding_cache[text]
     print(f"[EMB] {text!r}", flush=True)
-    result = client.models.embed_content(
-        model="models/text-embedding-004",
-        contents=text
-    )
-    vec = np.array(result.embeddings[0].values)
+    # text-embedding-004 は v1beta 非対応のため REST API v1 を直接呼び出す
+    url = f"https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent?key={GEMINI_API_KEY}"
+    body = json.dumps({
+        "model": "models/text-embedding-004",
+        "content": {"parts": [{"text": text}]}
+    }).encode()
+    req = _urllib.Request(url, data=body, headers={"Content-Type": "application/json"})
+    with _urllib.urlopen(req) as resp:
+        data = json.loads(resp.read())
+    vec = np.array(data["embedding"]["values"])
     embedding_cache[text] = vec
     return vec
 
