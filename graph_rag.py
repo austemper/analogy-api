@@ -441,13 +441,13 @@ def get_embedding(text):
     if text in embedding_cache:
         return embedding_cache[text]
     print(f"[EMB] {text!r}", flush=True)
-    # SDK は batchEmbedContents を使うが非対応モデルあり → REST embedContent を直接呼ぶ
+    # SDK は batchEmbedContents を使うが非対応 → REST embedContent を直接呼ぶ
     url = (
         "https://generativelanguage.googleapis.com"
-        f"/v1beta/models/text-embedding-004:embedContent?key={GEMINI_API_KEY}"
+        f"/v1beta/models/gemini-embedding-001:embedContent?key={GEMINI_API_KEY}"
     )
     body = json.dumps({
-        "model": "models/text-embedding-004",
+        "model": "models/gemini-embedding-001",
         "content": {"parts": [{"text": text}]}
     }).encode()
     req = _urllib.Request(url, data=body, headers={"Content-Type": "application/json"})
